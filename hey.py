@@ -112,6 +112,8 @@ while(True):
   else:
     break
 WORD_TO_FIND = 'imperdiet'
+MAX_PASSWORD_ATTEMPTS = 3
+TEST_PASSWORD = 'superSecurePassword'
 
 if type == 'read':
   logging.debug('Read operation selected...')
@@ -119,6 +121,23 @@ if type == 'read':
 elif type == 'write':
   logging.debug('Write operation selected...')
   write_operation(f_path)
+
+password_attempts = 0
+while(password_attempts < MAX_PASSWORD_ATTEMPTS):
+  admin_response = input('''If you're an admin, enter the password to see performance stats (enter q to quit): ''')
+  if admin_response == 'q':
+    break
+  elif admin_response == TEST_PASSWORD:
+    # show stats
+    print()
+  else:
+    logging.warning('User entered incorrect admin password: {0}'.format(admin_response))
+    password_attempts += 1
+    print('\nIncorrect password, please try again ({0} attempt{1} remaining)'.format(MAX_PASSWORD_ATTEMPTS - password_attempts, 's' if password_attempts < 2 else ''))
+
+if password_attempts >= MAX_PASSWORD_ATTEMPTS:
+  print('Failed to enter correct admin password, you can retry the next time you start the program.')
+
 
 end_time = time.time()
 total_execution_str = 'Total execution time: {0}'.format(round(end_time - start_time, 3))
