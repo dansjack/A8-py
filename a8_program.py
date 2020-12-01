@@ -4,7 +4,17 @@ import time
 import os
 import sys
 
+# config logging
+log_level = 'DEBUG'
+logging.basicConfig(level=log_level, filename='consoleapp.log', filemode='w', format='%(asctime)s %(levelname)s %(name)s - %(message)s')
+
+# constants
+WORD_TO_FIND = 'imperdiet'
+MAX_PASSWORD_ATTEMPTS = 3
+TEST_PASSWORD = 'superSecurePassword'
+
 def read_operation(file):
+  """Reads from the given file and counts instances of the WORD_TO_FIND overall and in each line"""
   try:
     total_read_time = 0.0
     total_imperdiet_read_time = 0.0
@@ -55,6 +65,7 @@ def read_operation(file):
     exit(1)
 
 def write_operation(file):
+  """Writes user input to the given file and counts instances of the WORD_TO_FIND overall and in each line of the user input"""
   user_sentences = []
   word_count = 0
   word_sentence_count = 0
@@ -96,7 +107,6 @@ def write_operation(file):
         write_line_time += round((write_end_time - write_start_time), 3)
       f.close()
 
-
       write_line_str = 'Time to write all lines to file: {0}'.format(write_line_time)
       find_line_str = 'Time to find the word {1} in each line: {0}'.format(find_line_time, WORD_TO_FIND)
       avg_line_str = 'Average time to write a line to the file: {0}'.format(round(write_line_time / sentence_count, 3))
@@ -120,74 +130,72 @@ def write_operation(file):
     exit(1)
 start_time = time.time()
 
-logging.basicConfig(level='DEBUG', filename='consoleapp.log', filemode='w', format='%(asctime)s %(levelname)s %(name)s - %(message)s')
-logging.info('Starting A8: Cloud Operations program...')
-WORD_TO_FIND = 'imperdiet'
-MAX_PASSWORD_ATTEMPTS = 3
-TEST_PASSWORD = 'superSecurePassword'
+def main():
+  """The main function of the program. Gets user input for file path, operation type, and admin password (if applicable). The program then runs through the read_operation() or write_operation() depending on the user's selection"""
+  print('***** A8: Cloud Operations program *****')
+  print('Enter q to quit at any time\n')
+  logging.debug('Prompting user for the path to an existing file...')
+  while(True):
+    f_path = input('Enter a file path: ')
+    if f_path == 'q':
+      sys.exit()
+    elif not os.path.exists(f_path):
+      logging.warning('No file exists at the path the user provided: ' + f_path)
+      print('\nThere is no file at ' + f_path + '. Please try again.')
+    else:
+      break
 
-print('***** A8: Cloud Operations program *****')
-print('Enter q to quit at any time\n')
-logging.debug('Prompting user for the path to an existing file...')
-while(True):
-  f_path = input('Enter a file path: ')
-  if f_path == 'q':
+  logging.debug('Prompting user for operation type...')
+  while(True):
+    type = input('Enter an operation type ("read" or "write"): ')
+    if type == 'q':
+      sys.exit()
+    elif type not in ['read', 'write']:
+      logging.warning('User entered an invalid type: ' + type)
+      print('\nInvalid type, operation can either be "read" or "write".')
+    else:
+      break
+
+  password_attempts = 0
+  is_admin = False
+  logging.debug('Prompting user for admin password...')
+  while(password_attempts < MAX_PASSWORD_ATTEMPTS):
+    admin_response = input('''If you're an admin, enter the password to see performance stats (just press enter if not an admin): ''')
+    password_attempts += 1
+    if admin_response == TEST_PASSWORD:
+      is_admin = True
+      break
+    elif admin_response == '' or password_attempts == MAX_PASSWORD_ATTEMPTS:
+      break
+    elif admin_response == 'q':
+      sys.exit()
+    else:
+      logging.warning('User entered incorrect admin password: {0}'.format(admin_response))
+      print('\nIncorrect password, please try again ({0} attempt{1} remaining)'.format(MAX_PASSWORD_ATTEMPTS - password_attempts, 's' if password_attempts < 2 else ''))
+
+  if password_attempts >= MAX_PASSWORD_ATTEMPTS:
+    print('\nFailed to enter correct admin password, exiting program.')
     sys.exit()
-  elif not os.path.exists(f_path):
-    logging.warning('No file exists at the path the user provided: ' + f_path)
-    print('\nThere is no file at ' + f_path + '. Please try again.')
-  else:
-    break
 
-logging.debug('Prompting user for operation type...')
-while(True):
-  type = input('Enter an operation type ("read" or "write"): ')
-  if type == 'q':
-    sys.exit()
-  elif type not in ['read', 'write']:
-    logging.warning('User entered an invalid type: ' + type)
-    print('\nInvalid type, operation can either be "read" or "write".')
-  else:
-    break
+  admin_stats = []
+  if type == 'read':
+    logging.debug('Read operation selected...')
+    admin_stats = read_operation(f_path)
+  elif type == 'write':
+    logging.debug('Write operation selected...')
+    admin_stats = write_operation(f_path)
 
-password_attempts = 0
-is_admin = False
-logging.debug('Prompting user for admin password...')
-while(password_attempts < MAX_PASSWORD_ATTEMPTS):
-  admin_response = input('''If you're an admin, enter the password to see performance stats (just press enter if not an admin): ''')
-  password_attempts += 1
-  if admin_response == TEST_PASSWORD:
-    is_admin = True
-    break
-  elif admin_response == '' or password_attempts == MAX_PASSWORD_ATTEMPTS:
-    break
-  elif admin_response == 'q':
-    sys.exit()
-  else:
-    logging.warning('User entered incorrect admin password: {0}'.format(admin_response))
-    print('\nIncorrect password, please try again ({0} attempt{1} remaining)'.format(MAX_PASSWORD_ATTEMPTS - password_attempts, 's' if password_attempts < 2 else ''))
+  end_time = time.time()
+  total_execution_str = 'Total execution time: {0}'.format(round(end_time - start_time, 3))
+  logging.info(total_execution_str)
 
-if password_attempts >= MAX_PASSWORD_ATTEMPTS:
-  print('\nFailed to enter correct admin password, exiting program.')
-  sys.exit()
-
-admin_stats = []
-if type == 'read':
-  logging.debug('Read operation selected...')
-  admin_stats = read_operation(f_path)
-elif type == 'write':
-  logging.debug('Write operation selected...')
-  admin_stats = write_operation(f_path)
-
-end_time = time.time()
-total_execution_str = 'Total execution time: {0}'.format(round(end_time - start_time, 3))
-logging.info(total_execution_str)
-
-if is_admin is True:
-  # print stats
-  print('\n***** Performance Stats *****')
-  for stat in admin_stats:
-    print(stat)
-  print(total_execution_str)
-
-logging.info('End of A8: Cloud Operations program')
+  if is_admin is True:
+    # print stats
+    print('\n***** Performance Stats *****')
+    for stat in admin_stats:
+      print(stat)
+    print(total_execution_str)
+if __name__ == "__main__":
+    logging.info('Starting A8: Cloud Operations program...')
+    main()
+    logging.info('End of A8: Cloud Operations program')
